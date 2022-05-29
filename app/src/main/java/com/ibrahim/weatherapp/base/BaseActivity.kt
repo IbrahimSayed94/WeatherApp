@@ -13,8 +13,14 @@ abstract class BaseActivity<B : ViewBinding> : AppCompatActivity() {
         binding = getViewBinding()
         setContentView(binding.root)
 
+        setupView()
+        setupViewModelObservers()
     } // fun of onCreate
 
     abstract fun getViewBinding(): B
+
+
+    abstract fun setupView()
+    abstract fun setupViewModelObservers()
 
 } // class of BaseActivity
