@@ -1,4 +1,4 @@
-package com.ibrahim.weatherapp
+package com.ibrahim.weatherapp.ui.weather
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -9,17 +9,24 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.ibrahim.weatherapp.base.BaseActivity
+import com.ibrahim.weatherapp.data.response.WeatherResponse
 import com.ibrahim.weatherapp.databinding.ActivityMainBinding
+import com.ibrahim.weatherapp.network.ResultModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.util.*
 
 @AndroidEntryPoint
@@ -29,6 +36,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private val permissionId = 2
 
+
+    private val viewModel: WeatherViewModel by viewModels()
+
+
     override fun getViewBinding() = ActivityMainBinding.inflate(layoutInflater)
 
     override fun setupView() {
@@ -37,7 +48,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     } // fun of setupView
 
     override fun setupViewModelObservers() {
-
+        viewModel.weatherDataObserver.observe(this,weatherDataObserver)
     } // fun of setupViewModelObservers
 
     private fun initFusedLocationClient()
@@ -101,7 +112,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                         val geocoder = Geocoder(this, Locale.getDefault())
                         val list: List<Address> =
                             geocoder.getFromLocation(location.latitude, location.longitude, 1)
+
+                        binding.txtAddress.text = list[0].adminArea
+
                         Log.i(TAG,"City : ${list[0].adminArea}")
+                        viewModel.fetchTeamMainData(city = list[0].adminArea)
                     }
                 }
             } else {
@@ -115,4 +130,54 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     } // fun of getLocation
 
 
-}
+    private val weatherDataObserver = Observer<ResultModel<WeatherResponse>> { result ->
+        lifecycleScope.launch {
+            when (result) {
+                is ResultModel.Loading -> {
+                    handleProgress(isLoading = result.isLoading ?: false)
+                } // Loading
+                is ResultModel.Success -> {
+                    onSuccess(data = result.data)
+                } // Success
+                is ResultModel.Failure -> {
+                    onFail()
+                } // Fail
+            }
+        }
+    } // weatherDataObserver
+
+    private fun handleProgress(isLoading : Boolean)
+    {
+        if(isLoading)
+            binding.progressBar.visibility = View.VISIBLE
+        else
+            binding.progressBar.visibility = View.GONE
+
+    } // fun of handleProgress
+
+    @SuppressLint("SetTextI18n")
+    private fun onSuccess(data : WeatherResponse)
+    {
+        handleProgress(isLoading = false)
+
+        binding.txtTemp.text = "${data.current?.temp_c} °"
+        binding.txtCondition.text = "${data.current?.condition?.text}"
+
+        Glide.with(this)
+            .applyDefaultRequestOptions(RequestOptions().centerCrop())
+            .load("https:${data.current?.condition?.icon}")
+            .into(binding.imgCondition)
+
+
+        binding.txtHumidity.text = "Humidity : ${data.current?.humidity} %"
+        binding.txtWindSpeed.text = "Wind Speed : ${data.current?.wind_kph} kph"
+        binding.txtWindDegree.text = "Wind Degree : ${data.current?.wind_degree} °"
+    } // fun of onSuccess
+
+    private fun onFail()
+    {
+        handleProgress(isLoading = false)
+
+    } // fun of onFail
+
+} // class of MainActivity

@@ -25,6 +25,7 @@ class APPInterceptor: Interceptor {
 
         Log.i(TAG,"request : ${request.url}")
         Log.i(TAG,"header : ${request.headers}")
+        Log.i(TAG,"response : ${response.body.toString()}")
 
         response.code//status code
         return response
