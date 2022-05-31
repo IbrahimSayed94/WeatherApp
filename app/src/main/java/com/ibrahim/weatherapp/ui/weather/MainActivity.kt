@@ -28,6 +28,7 @@ import com.ibrahim.weatherapp.data.response.WeatherResponse
 import com.ibrahim.weatherapp.databinding.ActivityMainBinding
 import com.ibrahim.weatherapp.network.ResultModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -39,6 +40,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     private val permissionId = 2
 
 
+    private var tempType = "c"
+    private var tempC = 0.0
+    private var tempF = 0.0
+
     private val viewModel: WeatherViewModel by viewModels()
 
     private lateinit var foreCastAdapter : ForCastAdapter
@@ -47,9 +52,28 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun getViewBinding() = ActivityMainBinding.inflate(layoutInflater)
 
     override fun setupView() {
+        initListeners()
         initFusedLocationClient()
         initForeCastList()
     } // fun of setupView
+
+
+    @SuppressLint("SetTextI18n")
+    private fun initListeners()
+    {
+        txt_temp.setOnClickListener {
+            if(tempType == "c")
+            {
+                binding.txtTemp.text = "$tempF °F"
+                tempType = "f"
+            }
+            else if(tempType == "f")
+            {
+                binding.txtTemp.text = "$tempC °C"
+                tempType = "c"
+            }
+        }
+    } // fun of initListeners
 
     private fun initForeCastList()
     {
@@ -171,7 +195,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     {
         handleProgress(isLoading = false)
 
-        binding.txtTemp.text = "${data.current?.temp_c} °C"
+        tempC = data.current?.temp_c ?: 0.0
+        tempF = data.current?.temp_f ?: 0.0
+
+        binding.txtTemp.text = "$tempC °C"
         binding.txtCondition.text = "${data.current?.condition?.text}"
 
         Glide.with(this)
