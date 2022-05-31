@@ -8,5 +8,8 @@ interface ApiService {
     @GET(Constants.getWeatherBasedCity)
     suspend fun fetchWeatherBasedCity(
         @Query("q") city : String ?= "Dubai",
+        @Query("days") days : Int ?= 5,
+        @Query("aqi") aqi : String ?= "no",
+        @Query("alerts") alerts : String ?= "no",
     ) : WeatherResponse
 }

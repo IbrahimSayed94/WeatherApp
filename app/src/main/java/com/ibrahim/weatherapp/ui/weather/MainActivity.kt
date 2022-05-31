@@ -17,6 +17,8 @@ import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -39,13 +41,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     private val viewModel: WeatherViewModel by viewModels()
 
+    private lateinit var foreCastAdapter : ForCastAdapter
+
 
     override fun getViewBinding() = ActivityMainBinding.inflate(layoutInflater)
 
     override fun setupView() {
         initFusedLocationClient()
-
+        initForeCastList()
     } // fun of setupView
+
+    private fun initForeCastList()
+    {
+        foreCastAdapter = ForCastAdapter(context = this)
+        binding.recyclerViewWeeklyWeather.layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
+        binding.recyclerViewWeeklyWeather.adapter = foreCastAdapter
+    }// fun of initForeCastList
 
     override fun setupViewModelObservers() {
         viewModel.weatherDataObserver.observe(this,weatherDataObserver)
@@ -160,7 +171,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     {
         handleProgress(isLoading = false)
 
-        binding.txtTemp.text = "${data.current?.temp_c} °"
+        binding.txtTemp.text = "${data.current?.temp_c} °C"
         binding.txtCondition.text = "${data.current?.condition?.text}"
 
         Glide.with(this)
@@ -172,6 +183,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         binding.txtHumidity.text = "Humidity : ${data.current?.humidity} %"
         binding.txtWindSpeed.text = "Wind Speed : ${data.current?.wind_kph} kph"
         binding.txtWindDegree.text = "Wind Degree : ${data.current?.wind_degree} °"
+
+        foreCastAdapter.submitList(data.forecast?.forecastday ?: arrayListOf())
     } // fun of onSuccess
 
     private fun onFail()

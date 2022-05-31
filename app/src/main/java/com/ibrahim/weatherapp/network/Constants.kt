@@ -8,7 +8,7 @@ object Constants {
 
     const val BASE_URL = "https://api.weatherapi.com/v1/"
 
-    const val getWeatherBasedCity = "current.json?key=$API_KEY"
+    const val getWeatherBasedCity = "forecast.json?key=$API_KEY"
 
 
 }
